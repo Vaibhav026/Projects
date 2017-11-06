@@ -1,0 +1,273 @@
+#include <iostream>
+#include <cstdlib>
+#include <random>
+using namespace std;
+
+
+
+class heap2
+{ public:
+  double depttime;
+  double arvtime;
+  int qno;
+};
+
+class heap
+{
+  public:
+  double timef;
+  int qno;
+  int nocustm;
+
+};
+
+
+
+void Insert(double x,double y,heap2 z[],int i,int no)
+{
+
+    z[i].arvtime=x;
+    z[i].depttime=y;
+    z[i].qno=no;
+
+}
+
+
+void Heapify1(heap h[],int siz,int x)
+{
+    int l=2*x;
+    int r=l+1;
+
+    if( l<=siz && h[l].nocustm<h[x].nocustm  && (r>siz || h[l].nocustm <=h[r].nocustm ) )
+    {
+        swap(h[l],h[x]);
+        Heapify1(h,siz,l);
+        return;
+    }
+
+    if(r<=siz && h[r].nocustm<h[x].nocustm)
+    {
+        swap(h[r],h[x]);
+        Heapify1(h,siz,r);
+        return;
+    }
+
+}
+
+
+void buildH1(int num[],double ft[],int s,heap h[])
+{
+   // Heapify1(num,t,1,k);
+
+
+    for(int i=1;i<=s;i++)
+    {
+        h[i].nocustm=num[i];
+        h[i].qno=i;
+        h[i].timef=ft[i];
+    }
+
+    for(int i=s/2;i>=1;i--)
+    {
+        Heapify1(h,s,i);
+    }
+
+}
+
+void Heapify2(heap2 cp[],int x,int siz)
+{
+    int l=2*x;
+    int r=l+1;
+
+    if(l<=siz && cp[l].depttime<cp[x].depttime && ( r>siz || cp[l].depttime<=cp[r].depttime))
+    {
+        swap(cp[l],cp[x]);
+        Heapify2(cp,l,siz);
+        return;
+    }
+
+    if(r<=siz && cp[r].depttime<cp[x].depttime)
+    {
+        swap(cp[r],cp[x]);
+        Heapify2(cp,r,siz);
+        return;
+    }
+
+}
+
+
+void del(heap2 he[],int curr)
+{
+
+    swap(he[1],he[curr]);
+
+    Heapify2(he,1,curr-1);
+
+}
+
+
+void check(heap2 h[],int x)
+{
+    if(x<=1)
+    return;
+
+    if(h[x].depttime< h[x/2].depttime)
+    swap(h[x],h[x/2]);
+
+    check(h,x/2);
+    return;
+}
+
+
+int main()
+{
+
+   int n,k;
+   double r;
+   double m,v;
+
+   cin>>r>>m>>v>>k>>n;
+
+   double arv[n+1];
+   double srvc[n+1];
+
+   arv[0]=0;
+
+   double x=((double) 1)/((double) r);
+
+
+
+    std::random_device rnd;
+
+    std::mt19937 gen(rnd());
+
+    std::uniform_real_distribution<> dis(0,x);
+    for (int i = 1; i <= n; i++)
+  {
+        double c= dis(gen);
+        arv[i]=arv[i-1]+c;
+  }
+
+    std::uniform_real_distribution<> dis2(m-v, m+v);
+    for(int i=1;i<=n;i++){
+
+     srvc[i] = dis2(gen);
+     cout<<srvc[i]<<" ";
+    }
+
+    cout<<endl;
+
+     heap2 H2[n+1];
+
+     heap H1[k+1];
+
+     int custmno[k+1]={0};
+     double finishtime[k+1]={0};
+
+
+
+     int i=1;
+
+     int op;
+
+     int size2=0;    //  current size of H2
+
+     double wt[n+1];
+     wt[1]=0;
+
+
+
+
+     while(i<=n){
+
+        if(i==1)
+        {
+            // queue no.
+
+           custmno[1]=1;
+
+           finishtime[1]=arv[i]+srvc[i];
+
+
+
+           buildH1(custmno,finishtime,k,H1);
+
+           Insert(arv[i],finishtime[i],H2,size2+1,1) ;
+
+           size2++;
+        }
+
+        else
+        {
+
+
+           bool in =false;
+           while(1)
+           {
+              if(size2>0 &&  H2[1].depttime<=arv[i])
+              { op=H2[1].qno;
+                custmno[op]--;
+
+                if(custmno[op]==0)
+                finishtime[op]=0;
+
+                del(H2,size2);     //  deletes min and makes changes in  two arrays (no and finish)
+                size2--;
+
+                in=true;
+              }
+              else
+              break;
+           }
+
+          if(in==true)
+          buildH1(custmno,finishtime,k,H1);  //builds H1 after all elemnets have been dleted ac to their times.
+
+          H1[1].nocustm++;
+
+          if(i<=k)
+          wt[i]=0;
+          else
+          {
+              if(H1[1].timef==0)
+              wt[i]=0;
+              else
+              wt[i]=H1[1].timef-arv[i];
+
+          }
+          if(H1[1].timef==0)
+          {H1[1].timef=arv[i]+srvc[i];
+          }
+          else
+          H1[1].timef=H1[1].timef+srvc[i];
+
+
+          int qnn=H1[1].qno;
+
+          custmno[qnn]++;
+          finishtime[qnn]=H1[1].timef;
+
+          double tim=H1[1].timef;
+
+
+          Heapify1(H1,k,1);           // again rearragnes eelemnts if order has been changed after new customeer insertion
+
+          Insert(arv[i],tim,H2,size2+1,qnn) ;
+          size2++;
+          check(H2,size2);
+
+        }
+
+        i++;
+     }
+
+     double sum=0;
+    for(int j=1;j<=n;j++)
+   {
+       sum=sum+wt[j];
+   }
+
+     sum=(double) sum/(double) n  ;
+     cout<<sum;
+    return 0;
+}
